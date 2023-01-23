@@ -31,6 +31,8 @@ namespace RokasDan.FistPump.Runtime
                 _instance = this;
             }
             playerControls = new InputActions();
+            // Removes cursor while playing.
+            Cursor.visible = false;
         }
 
         private void OnEnable()
