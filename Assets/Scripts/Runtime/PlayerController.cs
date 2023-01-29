@@ -18,11 +18,14 @@ namespace RokasDan.FistPump.Runtime
         [Header("Forces")]
         [Min(0f)]
         [SerializeField]
-        private float moveForce = 100f;
+        private float moveSpeed = 100f;
 
         [Min(0f)]
         [SerializeField]
         private float jumpSpeed = 20f;
+
+        [SerializeField]
+        private int airJumpNumber = 2;
 
         [Header("Inputs")]
         [SerializeField]
@@ -42,6 +45,9 @@ namespace RokasDan.FistPump.Runtime
         private Quaternion flattenedLookRotation;
         private Vector3 absoluteMoveDirection;
         private Vector3 relativeMoveDirection;
+        private float radius;
+        private bool isGrounded;
+        private int jumpNumberHelper;
 
         private void OnEnable()
         {
@@ -88,7 +94,6 @@ namespace RokasDan.FistPump.Runtime
 
             // Getting the angle which will rotate the absolute vectors from WASD keys.
             flattenedLookRotation = Quaternion.LookRotation(flattenedLookDirection);
-
         }
 
         // If WASD or arrows are pressed we start apply a Vector3 to our move direction.
@@ -110,7 +115,6 @@ namespace RokasDan.FistPump.Runtime
         // Listening for the space bar input, if pressed jump method is preformed.
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
-            Debug.Log("Jump Performed!", this);
             Jump();
         }
 
@@ -121,15 +125,35 @@ namespace RokasDan.FistPump.Runtime
             relativeMoveDirection = flattenedLookRotation * absoluteMoveDirection;
 
             // Normalizing and adding velocity to the rotated absolute vector.
-            rigidBody.AddForce(relativeMoveDirection.normalized * moveForce);
+            rigidBody.AddForce(relativeMoveDirection.normalized * moveSpeed);
+        }
+
+        private void IsGrounded()
+        {
+            isGrounded = Physics.CheckSphere(
+                transform.position + Vector3.down + new Vector3(0, GetComponent<CapsuleCollider>().radius * 0.9f, 0),
+                GetComponent<CapsuleCollider>().radius * 0.9f
+            );
         }
 
         // Our Jump function adds velocity to Y vector.
         private void Jump()
         {
-            var currentVelocity = rigidBody.velocity;
-            currentVelocity.y += jumpSpeed;
-            rigidBody.velocity = currentVelocity;
+            IsGrounded();
+
+            if (isGrounded)
+            {
+                jumpNumberHelper = airJumpNumber;
+            }
+
+            if (jumpNumberHelper != 0)
+            {
+                Debug.Log("Jump Performed!", this);
+                var currentVelocity = rigidBody.velocity;
+                currentVelocity.y += jumpSpeed;
+                rigidBody.velocity = currentVelocity;
+                jumpNumberHelper -= 1;
+            }
         }
 
 
@@ -150,6 +174,10 @@ namespace RokasDan.FistPump.Runtime
             // Relative Move direction of the WASD absolute vectors when the rotation of the camera forward vector is applied.
             Gizmos.color = Color.red;
             Gizmos.DrawRay(transform.position, relativeMoveDirection.normalized * gizmoLenght);
+
+            //Sphere collider for the ground check.
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(transform.position + Vector3.down + new Vector3(0, GetComponent<CapsuleCollider>().radius * 0.9f, 0), GetComponent<CapsuleCollider>().radius * 0.9f);
         }
     }
 }
