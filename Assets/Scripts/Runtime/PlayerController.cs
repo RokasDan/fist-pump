@@ -15,6 +15,12 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private Transform cameraTransform;
 
+        [SerializeField]
+        private GroundedController groundCheck;
+
+        [SerializeField]
+        private HoverController hoverRay;
+
         [Header("Forces")]
         [Min(0f)]
         [SerializeField]
@@ -47,7 +53,7 @@ namespace RokasDan.FistPump.Runtime
         private Vector3 relativeMoveDirection;
         private float radius;
         private bool isGrounded;
-        private int jumpNumberHelper;
+        private int airjumpNumberHelper;
 
         private void OnEnable()
         {
@@ -128,34 +134,26 @@ namespace RokasDan.FistPump.Runtime
             rigidBody.AddForce(relativeMoveDirection.normalized * moveSpeed);
         }
 
-        private void IsGrounded()
-        {
-            isGrounded = Physics.CheckSphere(
-                transform.position + Vector3.down + new Vector3(0, GetComponent<CapsuleCollider>().radius * 0.9f, 0),
-                GetComponent<CapsuleCollider>().radius * 0.9f
-            );
-        }
-
         // Our Jump function adds velocity to Y vector.
         private void Jump()
         {
-            IsGrounded();
+            // Checking if we are grounded with the lenght of out hover ray distance.
+            bool grounded = groundCheck.IsGrounded(hoverRay.rayHit.distance);
 
-            if (isGrounded)
+            if (grounded)
             {
-                jumpNumberHelper = airJumpNumber;
+                airjumpNumberHelper = airJumpNumber;
             }
 
-            if (jumpNumberHelper != 0)
+            if (airjumpNumberHelper != 0)
             {
                 Debug.Log("Jump Performed!", this);
                 var currentVelocity = rigidBody.velocity;
                 currentVelocity.y += jumpSpeed;
                 rigidBody.velocity = currentVelocity;
-                jumpNumberHelper -= 1;
+                airjumpNumberHelper -= 1;
             }
         }
-
 
         //Gizmos
 

@@ -21,7 +21,12 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float rideSpringDamper;
 
-        private RaycastHit rayHit;
+        [Min(1f)]
+        [SerializeField]
+        private float bellowRideHeightRay = 1f;
+
+        public RaycastHit rayHit;
+
 
         // private Vector3 otherObjectVelocity = Vector3.zero;
 
@@ -35,7 +40,7 @@ namespace RokasDan.FistPump.Runtime
 
         private void PlayerHover()
         {
-            Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out rayHit, rideHeight);
+            Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out rayHit, rideHeight * bellowRideHeightRay);
 
             if (rayHit.collider != null)
             {
