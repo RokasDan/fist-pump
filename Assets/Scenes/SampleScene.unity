@@ -397,10 +397,11 @@ MonoBehaviour:
   rigidBody: {fileID: 166504816}
   cameraTransform: {fileID: 1797296719}
   groundCheck: {fileID: 166504822}
-  hoverRay: {fileID: 166504821}
+  hoverController: {fileID: 166504821}
   moveSpeed: 20
   jumpSpeed: 10
   airJumpNumber: 2
+  hoverDownTime: 0.5
   jumpInputAction: {fileID: -2780093846466565034, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   moveInputAction: {fileID: -1680190386980627800, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   lookInputAction: {fileID: -5630151704836100654, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
@@ -455,7 +456,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 782654e88b0cca741b644460ca4baa8b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -514,10 +515,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerRigidbody: {fileID: 166504816}
-  rideHeight: 1.8
-  rideSpringStrength: 32.09
-  rideSpringDamper: 4.01
-  bellowRideHeightRay: 1
+  detectionHeight: 2.5
+  rideHeight: 2
+  rideSpringStrength: 100
+  rideSpringDamper: 5
+  isHovering: 1
 --- !u!114 &166504822
 MonoBehaviour:
   m_ObjectHideFlags: 0

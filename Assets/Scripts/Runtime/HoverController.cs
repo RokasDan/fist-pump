@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace RokasDan.FistPump.Runtime
 {
@@ -11,26 +12,38 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private Rigidbody playerRigidbody;
 
-        [Header("Float Controls")]
+        [Header("Hover Height Controls")]
+        [Min(1f)]
         [SerializeField]
-        private float rideHeight;
+        private float detectionHeight = 2.5f;
 
+        [Min(1f)]
+        [SerializeField]
+        private float rideHeight = 2f;
+
+        [Header("Hover Force Controls")]
         [SerializeField]
         private float rideSpringStrength;
 
         [SerializeField]
         private float rideSpringDamper;
 
-        [Min(1f)]
-        [SerializeField]
-        private float bellowRideHeightRay = 1f;
+        // Bool for deactivation when jumping.
+        public bool isHovering = true;
 
+        // Raycast reference for other raycast applications such as IsGrounded.
         public RaycastHit rayHit;
 
 
-        // private Vector3 otherObjectVelocity = Vector3.zero;
+        //Detection height can't be smaller then ride height. This sets it from doing so.
 
-        // Rigidbody otherObjectBody = rayHit.rigidbody;
+        private void OnValidate()
+        {
+            if (detectionHeight < rideHeight)
+            {
+                detectionHeight = rideHeight;
+            }
+        }
 
         // Update is called once per frame
         void Update()
@@ -40,9 +53,9 @@ namespace RokasDan.FistPump.Runtime
 
         private void PlayerHover()
         {
-            Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out rayHit, rideHeight * bellowRideHeightRay);
+            Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out rayHit, detectionHeight);
 
-            if (rayHit.collider != null)
+            if (rayHit.collider != null && isHovering)
             {
                 Debug.Log("I hit something");
                 //Our player velocity and vector direction of the raycast.
@@ -79,10 +92,10 @@ namespace RokasDan.FistPump.Runtime
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawRay(transform.position, Vector3.down * rideHeight);
+            Gizmos.DrawRay(transform.position, Vector3.down * detectionHeight);
 
             Gizmos.color = Color.blue;
-            Gizmos.DrawSphere(transform.position - new Vector3(0, rideHeight, 0), 0.3f);
+            Gizmos.DrawSphere(transform.position - new Vector3(0, rideHeight, 0), 0.2f);
         }
     }
 }

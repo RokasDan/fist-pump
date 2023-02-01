@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace RokasDan.FistPump.Runtime
 {
@@ -18,8 +19,9 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private GroundedController groundCheck;
 
+        [FormerlySerializedAs("hoverRay")]
         [SerializeField]
-        private HoverController hoverRay;
+        private HoverController hoverController;
 
         [Header("Forces")]
         [Min(0f)]
@@ -32,6 +34,9 @@ namespace RokasDan.FistPump.Runtime
 
         [SerializeField]
         private int airJumpNumber = 2;
+
+        [SerializeField]
+        private float hoverDownTime = 0.5f;
 
         [Header("Inputs")]
         [SerializeField]
@@ -138,25 +143,45 @@ namespace RokasDan.FistPump.Runtime
         private void Jump()
         {
             // Checking if we are grounded with the lenght of out hover ray distance.
-            bool grounded = groundCheck.IsGrounded(hoverRay.rayHit.distance);
+            bool grounded = groundCheck.IsGrounded(hoverController.rayHit.distance);
 
             if (grounded)
             {
                 airjumpNumberHelper = airJumpNumber;
             }
 
+            // Checking for use of double jump.
             if (airjumpNumberHelper != 0)
             {
+                //Deactivating hover so it wouldn't stop one from jumping.
+                StartCoroutine("HoverDeactivate");
+
+                // Applying force.
                 Debug.Log("Jump Performed!", this);
                 var currentVelocity = rigidBody.velocity;
+
+                //Zeroing up velocity to make jumps consistent.
+                currentVelocity.y = 0;
+
+                //Adding our jump velocity.
                 currentVelocity.y += jumpSpeed;
                 rigidBody.velocity = currentVelocity;
+
+                // Double jump number being brought down.
                 airjumpNumberHelper -= 1;
             }
         }
 
-        //Gizmos
+        // Hover temp deactivation coroutine.
+        private IEnumerator HoverDeactivate()
+        {
+            // Turning hovering off temporarily.
+            hoverController.isHovering = false;
+            yield return new WaitForSeconds(hoverDownTime);
+            hoverController.isHovering = true;
+        }
 
+        //Gizmos
         private void OnDrawGizmos()
         {
             //Camera look directly from camera transform.
@@ -172,10 +197,6 @@ namespace RokasDan.FistPump.Runtime
             // Relative Move direction of the WASD absolute vectors when the rotation of the camera forward vector is applied.
             Gizmos.color = Color.red;
             Gizmos.DrawRay(transform.position, relativeMoveDirection.normalized * gizmoLenght);
-
-            //Sphere collider for the ground check.
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(transform.position + Vector3.down + new Vector3(0, GetComponent<CapsuleCollider>().radius * 0.9f, 0), GetComponent<CapsuleCollider>().radius * 0.9f);
         }
     }
 }
