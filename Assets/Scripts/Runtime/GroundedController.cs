@@ -6,6 +6,11 @@ namespace RokasDan.FistPump.Runtime
 {
     public class GroundedController : MonoBehaviour
     {
+        private int isInAir;
+
+        private RaycastHit rayHit;
+
+
         // Ground check class, use the raycast lenght for the hover component to cast this ray.
         public bool IsGrounded(float hoverRayLenght)
         {

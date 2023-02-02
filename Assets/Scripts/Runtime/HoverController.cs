@@ -34,6 +34,8 @@ namespace RokasDan.FistPump.Runtime
         // Raycast reference for other raycast applications such as IsGrounded.
         public RaycastHit rayHit;
 
+        private int isInAir;
+
 
         //Detection height can't be smaller then ride height. This sets it from doing so.
 
@@ -49,6 +51,7 @@ namespace RokasDan.FistPump.Runtime
         void Update()
         {
             PlayerHover();
+            HoverDeactivateEvent();
         }
 
         private void PlayerHover()
@@ -86,6 +89,20 @@ namespace RokasDan.FistPump.Runtime
                 {
                     otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
                 }
+            }
+        }
+
+        private void HoverDeactivateEvent()
+        {
+            if (rayHit.collider == null && isInAir == 0)
+            {
+                isInAir = 1;
+            }
+
+            if (rayHit.collider != null && isInAir == 1)
+            {
+                isInAir = 0;
+                isHovering = true;
             }
         }
 

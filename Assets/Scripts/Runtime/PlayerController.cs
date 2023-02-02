@@ -16,8 +16,9 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private Transform cameraTransform;
 
+        [FormerlySerializedAs("groundCheck")]
         [SerializeField]
-        private GroundedController groundCheck;
+        private GroundedController groundedController;
 
         [FormerlySerializedAs("hoverRay")]
         [SerializeField]
@@ -32,11 +33,9 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float jumpSpeed = 20f;
 
+        [FormerlySerializedAs("airJumpNumber")]
         [SerializeField]
-        private int airJumpNumber = 2;
-
-        [SerializeField]
-        private float hoverDownTime = 0.5f;
+        private int jumpNumber = 2;
 
         [Header("Inputs")]
         [SerializeField]
@@ -57,8 +56,8 @@ namespace RokasDan.FistPump.Runtime
         private Vector3 absoluteMoveDirection;
         private Vector3 relativeMoveDirection;
         private float radius;
-        private bool isGrounded;
-        private int airjumpNumberHelper;
+        private int jumpNumberHelper;
+        private int isInAir = 1;
 
         private void OnEnable()
         {
@@ -86,6 +85,7 @@ namespace RokasDan.FistPump.Runtime
 
         private void FixedUpdate()
         {
+            GroundCheck();
             // If vector3 is not 0 0 0 we apply the move function.
             if (absoluteMoveDirection != Vector3.zero)
             {
@@ -142,19 +142,10 @@ namespace RokasDan.FistPump.Runtime
         // Our Jump function adds velocity to Y vector.
         private void Jump()
         {
-            // Checking if we are grounded with the lenght of out hover ray distance.
-            bool grounded = groundCheck.IsGrounded(hoverController.rayHit.distance);
-
-            if (grounded)
-            {
-                airjumpNumberHelper = airJumpNumber;
-            }
-
-            // Checking for use of double jump.
-            if (airjumpNumberHelper != 0)
+            if (jumpNumberHelper != 0)
             {
                 //Deactivating hover so it wouldn't stop one from jumping.
-                StartCoroutine("HoverDeactivate");
+                hoverController.isHovering = false;
 
                 // Applying force.
                 Debug.Log("Jump Performed!", this);
@@ -168,17 +159,29 @@ namespace RokasDan.FistPump.Runtime
                 rigidBody.velocity = currentVelocity;
 
                 // Double jump number being brought down.
-                airjumpNumberHelper -= 1;
+                jumpNumberHelper -= 1;
+
             }
         }
 
-        // Hover temp deactivation coroutine.
-        private IEnumerator HoverDeactivate()
+        private void GroundCheck()
         {
-            // Turning hovering off temporarily.
-            hoverController.isHovering = false;
-            yield return new WaitForSeconds(hoverDownTime);
-            hoverController.isHovering = true;
+            // Checking if we are grounded with the lenght of out hover ray distance.
+            bool grounded = groundedController.IsGrounded(hoverController.rayHit.distance);
+
+            //Creating an event so air jumps would be possible when riding of a cliff.
+            //Event prevents jump stack so jump number would only reset when the ray
+            //enters the ground.
+            if (grounded && isInAir == 1)
+            {
+                isInAir = 0;
+                jumpNumberHelper = jumpNumber;
+            }
+
+            if (grounded == false && isInAir == 0)
+            {
+                isInAir = 1;
+            }
         }
 
         //Gizmos
