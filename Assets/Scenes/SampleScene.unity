@@ -396,12 +396,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rigidBody: {fileID: 166504816}
   cameraTransform: {fileID: 1797296719}
-  groundCheck: {fileID: 166504822}
+  groundedController: {fileID: 166504822}
   hoverController: {fileID: 166504821}
   moveSpeed: 20
   jumpSpeed: 10
-  airJumpNumber: 2
-  hoverDownTime: 0.5
+  jumpNumber: 2
   jumpInputAction: {fileID: -2780093846466565034, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   moveInputAction: {fileID: -1680190386980627800, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   lookInputAction: {fileID: -5630151704836100654, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
@@ -517,9 +516,13 @@ MonoBehaviour:
   playerRigidbody: {fileID: 166504816}
   detectionHeight: 2.5
   rideHeight: 2
-  rideSpringStrength: 100
-  rideSpringDamper: 5
+  rideSpringStrength: 40
+  rideSpringDamper: 2
   isHovering: 1
+  usePID: 1
+  proportional: 3.5
+  integral: 0.3
+  derivative: 0.3
 --- !u!114 &166504822
 MonoBehaviour:
   m_ObjectHideFlags: 0

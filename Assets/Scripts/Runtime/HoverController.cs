@@ -31,14 +31,30 @@ namespace RokasDan.FistPump.Runtime
         // Bool for deactivation when jumping.
         public bool isHovering = true;
 
+        [Header("PID Controls")]
+        [SerializeField]
+        private bool usePID;
+
+        [SerializeField]
+        [Range(-10, 10)]
+        private float proportional, integral, derivative;
+
+
         // Raycast reference for other raycast applications such as IsGrounded.
         public RaycastHit rayHit;
 
+        // Used for the event to check if the player is grounded or not.
         private int isInAir;
 
+        private PID controllerPID;
+
+        // Get the non-mono PID class.
+        private void Start()
+        {
+            controllerPID = new PID(proportional, integral, derivative);
+        }
 
         //Detection height can't be smaller then ride height. This sets it from doing so.
-
         private void OnValidate()
         {
             if (detectionHeight < rideHeight)
@@ -80,14 +96,40 @@ namespace RokasDan.FistPump.Runtime
 
                 float springForce = (x * rideSpringStrength) - (releaseVelocity * rideSpringDamper);
 
-                //Drawing the Ray vector of the float mechanism.
-                Debug.DrawLine(transform.position, transform.position + (rayDirection * springForce), Color.yellow);
-
-                playerRigidbody.AddForce(rayDirection * springForce);
-
-                if (otherHitBody != null)
+                // Checking when ever we are using PID to apply force.
+                if (usePID)
                 {
-                    otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
+                    var currentPosition = transform.position;
+                    var targetPosition = rayDirection * springForce;
+                    var error = targetPosition.y - currentPosition.y;
+                    var outputPID = controllerPID.GetOutput(error, Time.fixedDeltaTime);
+
+                    //Applying our pid force.
+                    playerRigidbody.AddForce(outputPID * Vector3.up);
+
+                    //Drawing the Ray vector of the float mechanism.
+                    Debug.DrawLine(transform.position, transform.position + (Vector3.up * outputPID), Color.yellow);
+
+                    // Adding force to other Rigidbodies if hit.
+                    if (otherHitBody != null)
+                    {
+                        otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
+                    }
+
+                }
+                else
+                {
+                    //Applying force without PID.
+                    playerRigidbody.AddForce(rayDirection * springForce);
+
+                    //Drawing the Ray vector of the float mechanism.
+                    Debug.DrawLine(transform.position, transform.position + (rayDirection * springForce), Color.yellow);
+
+                    // Adding force to other Rigidbodies if hit.
+                    if (otherHitBody != null)
+                    {
+                        otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
+                    }
                 }
             }
         }

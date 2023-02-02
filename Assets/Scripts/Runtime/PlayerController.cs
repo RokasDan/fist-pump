@@ -95,8 +95,6 @@ namespace RokasDan.FistPump.Runtime
 
         private void OnLookPreformed(InputAction.CallbackContext context)
         {
-            Debug.Log("Looking Around", this);
-
             //Getting camera forward transform.
             var cameraDirection = cameraTransform.forward;
 
@@ -110,7 +108,6 @@ namespace RokasDan.FistPump.Runtime
         // If WASD or arrows are pressed we start apply a Vector3 to our move direction.
         private void OnMovePerformed(InputAction.CallbackContext context)
         {
-            Debug.Log("Move Performed!", this);
             var axis = context.ReadValue<Vector2>();
             absoluteMoveDirection = new Vector3(axis.x, 0f, axis.y);
         }
