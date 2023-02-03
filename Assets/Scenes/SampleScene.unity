@@ -493,7 +493,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 166504814}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.46, z: 0}
+  m_LocalPosition: {x: 0, y: 6.27, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -516,13 +516,15 @@ MonoBehaviour:
   playerRigidbody: {fileID: 166504816}
   detectionHeight: 2.5
   rideHeight: 2
-  rideSpringStrength: 40
-  rideSpringDamper: 2
+  rideSpringStrength: 50
+  rideSpringDamper: 1.49
   isHovering: 1
-  usePID: 1
-  proportional: 3.5
-  integral: 0.3
-  derivative: 0.3
+  useSpringOnly: 0
+  applyPIDToSpring: 1
+  applyOnlyPID: 0
+  proportional: 3.3
+  integral: 0.15
+  derivative: 0.39
 --- !u!114 &166504822
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1915,7 +1917,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1581374546}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.91, z: 0}
+  m_LocalPosition: {x: 0, y: 6.72, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2100,7 +2102,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797296714}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.91, z: 0}
+  m_LocalPosition: {x: 0, y: 6.72, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

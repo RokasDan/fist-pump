@@ -31,10 +31,20 @@ namespace RokasDan.FistPump.Runtime
         // Bool for deactivation when jumping.
         public bool isHovering = true;
 
-        [Header("PID Controls")]
-        [SerializeField]
-        private bool usePID;
+        [FormerlySerializedAs("usePID")]
+        [Header("Hover Force Routing")]
 
+        [SerializeField]
+        private bool useSpringOnly;
+
+
+        [SerializeField]
+        private bool applyPIDToSpring;
+
+        [SerializeField]
+        private bool applyOnlyPID;
+
+        [Header("PID Controls")]
         [SerializeField]
         [Range(-10, 10)]
         private float proportional, integral, derivative;
@@ -55,11 +65,30 @@ namespace RokasDan.FistPump.Runtime
         }
 
         //Detection height can't be smaller then ride height. This sets it from doing so.
+        //Detection for PID routing so two or more variants would not be used.
         private void OnValidate()
         {
             if (detectionHeight < rideHeight)
             {
                 detectionHeight = rideHeight;
+            }
+
+            if (useSpringOnly)
+            {
+                applyPIDToSpring = false;
+                applyOnlyPID = false;
+            }
+
+            if (applyPIDToSpring)
+            {
+                useSpringOnly = false;
+                applyOnlyPID = false;
+            }
+
+            if (applyOnlyPID)
+            {
+                useSpringOnly = false;
+                applyPIDToSpring = false;
             }
         }
 
@@ -76,7 +105,6 @@ namespace RokasDan.FistPump.Runtime
 
             if (rayHit.collider != null && isHovering)
             {
-                Debug.Log("I hit something");
                 //Our player velocity and vector direction of the raycast.
                 Vector3 rayDirection = transform.TransformDirection(Vector3.down);
 
@@ -97,15 +125,16 @@ namespace RokasDan.FistPump.Runtime
                 float springForce = (x * rideSpringStrength) - (releaseVelocity * rideSpringDamper);
 
                 // Checking when ever we are using PID to apply force.
-                if (usePID)
+                if (applyPIDToSpring)
                 {
-                    var currentPosition = transform.position;
-                    var targetPosition = rayDirection * springForce;
-                    var error = targetPosition.y - currentPosition.y;
+                    var errorVector = rayDirection * springForce;
+                    var error = errorVector.y;
                     var outputPID = controllerPID.GetOutput(error, Time.fixedDeltaTime);
 
-                    //Applying our pid force.
-                    playerRigidbody.AddForce(outputPID * Vector3.up);
+                    Debug.Log(error);
+
+                    //Applying our pid force to the spring force.
+                    playerRigidbody.AddForce(new Vector3(0, outputPID, 0));
 
                     //Drawing the Ray vector of the float mechanism.
                     Debug.DrawLine(transform.position, transform.position + (Vector3.up * outputPID), Color.yellow);
@@ -117,13 +146,39 @@ namespace RokasDan.FistPump.Runtime
                     }
 
                 }
-                else
+
+                if(useSpringOnly)
                 {
                     //Applying force without PID.
                     playerRigidbody.AddForce(rayDirection * springForce);
 
                     //Drawing the Ray vector of the float mechanism.
                     Debug.DrawLine(transform.position, transform.position + (rayDirection * springForce), Color.yellow);
+
+                    // Adding force to other Rigidbodies if hit.
+                    if (otherHitBody != null)
+                    {
+                        otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
+                    }
+                }
+
+                if (applyOnlyPID)
+                {
+                    var targetY = rayHit.distance;
+
+                    //This part need to figure out
+                    var currentY = rayHit.distance - detectionHeight ;
+                    var error = rayHit.distance - rideHeight;
+
+                    Debug.Log(error);
+
+                    var outputPID = controllerPID.GetOutput(-error, Time.fixedDeltaTime);
+
+                    //Applying our pid force straight to our rigidbody.
+                    playerRigidbody.AddForce(new Vector3(0, outputPID, 0));
+
+                    //Drawing the Ray vector of the float mechanism.
+                    Debug.DrawLine(transform.position, transform.position + (Vector3.up * outputPID), Color.yellow);
 
                     // Adding force to other Rigidbodies if hit.
                     if (otherHitBody != null)
@@ -155,6 +210,9 @@ namespace RokasDan.FistPump.Runtime
 
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(transform.position - new Vector3(0, rideHeight, 0), 0.2f);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawSphere(transform.position - new Vector3(0, rayHit.distance, 0), 0.2f);
         }
     }
 }
