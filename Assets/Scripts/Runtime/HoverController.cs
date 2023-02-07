@@ -6,6 +6,8 @@ using UnityEngine.Serialization;
 
 namespace RokasDan.FistPump.Runtime
 {
+    // Class for hovering your character controller or any other character.
+    // Class inspired by: https://www.youtube.com/watch?v=qdskE8PJy6Q
     public class HoverController : MonoBehaviour
     {
         [Header("References")]
@@ -28,12 +30,14 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float rideSpringDamper;
 
+        [SerializeField]
+        private bool deactivateGravityOnHover = false;
+
         // Bool for deactivation when jumping.
         public bool isHovering = true;
 
         [FormerlySerializedAs("usePID")]
         [Header("Hover Force Routing")]
-
         [SerializeField]
         private bool useSpringOnly;
 
@@ -55,6 +59,9 @@ namespace RokasDan.FistPump.Runtime
 
         // Used for the event to check if the player is grounded or not.
         private int isInAir;
+
+        // Used for the gravity event to check if the player is hovering or not.
+        private int isInAirGravity = 1;
 
         private PID controllerPID;
 
@@ -93,9 +100,10 @@ namespace RokasDan.FistPump.Runtime
         }
 
         // Update is called once per frame
-        void Update()
+        void FixedUpdate()
         {
             PlayerHover();
+            GravityOffOnHover();
             HoverDeactivateEvent();
         }
 
@@ -144,10 +152,9 @@ namespace RokasDan.FistPump.Runtime
                     {
                         otherHitBody.AddForceAtPosition(rayDirection * -springForce, rayHit.point);
                     }
-
                 }
 
-                if(useSpringOnly)
+                if (useSpringOnly)
                 {
                     //Applying force without PID.
                     playerRigidbody.AddForce(rayDirection * springForce);
@@ -164,10 +171,6 @@ namespace RokasDan.FistPump.Runtime
 
                 if (applyOnlyPID)
                 {
-                    var targetY = rayHit.distance;
-
-                    //This part need to figure out
-                    var currentY = rayHit.distance - detectionHeight ;
                     var error = rayHit.distance - rideHeight;
 
                     Debug.Log(error);
@@ -189,6 +192,8 @@ namespace RokasDan.FistPump.Runtime
             }
         }
 
+
+        // Hover event, turns back on hovering if called.
         private void HoverDeactivateEvent()
         {
             if (rayHit.collider == null && isInAir == 0)
@@ -200,6 +205,26 @@ namespace RokasDan.FistPump.Runtime
             {
                 isInAir = 0;
                 isHovering = true;
+            }
+        }
+
+        // Gravity event, turns gravity on and off on hover if used in inspector.
+        // This is if you want to exclude gravity forces from the hover application.
+        private void GravityOffOnHover()
+        {
+            if (deactivateGravityOnHover)
+            {
+                if (rayHit.collider == null && isInAirGravity == 0)
+                {
+                    isInAirGravity = 1;
+                    playerRigidbody.useGravity = true;
+                }
+
+                if (rayHit.collider != null && isInAirGravity == 1)
+                {
+                    isInAirGravity = 0;
+                    playerRigidbody.useGravity = false;
+                }
             }
         }
 

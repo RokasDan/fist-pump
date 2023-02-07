@@ -24,18 +24,8 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private HoverController hoverController;
 
-        [Header("Forces")]
-        [Min(0f)]
         [SerializeField]
-        private float moveSpeed = 100f;
-
-        [Min(0f)]
-        [SerializeField]
-        private float jumpSpeed = 20f;
-
-        [FormerlySerializedAs("airJumpNumber")]
-        [SerializeField]
-        private int jumpNumber = 2;
+        private MoveForceController moveForceController;
 
         [Header("Inputs")]
         [SerializeField]
@@ -132,32 +122,26 @@ namespace RokasDan.FistPump.Runtime
             // Applying the rotation of the camera forward vector to the WASD absolute vector.
             relativeMoveDirection = flattenedLookRotation * absoluteMoveDirection;
 
-            // Normalizing and adding velocity to the rotated absolute vector.
-            rigidBody.AddForce(relativeMoveDirection.normalized * moveSpeed);
+            // Adding force through our moveForceController class.
+            moveForceController.AddMoveForce(relativeMoveDirection);
         }
 
         // Our Jump function adds velocity to Y vector.
         private void Jump()
         {
-            if (jumpNumberHelper != 0)
+            if (moveForceController.JumpNumberCheck())
             {
                 //Deactivating hover so it wouldn't stop one from jumping.
                 hoverController.isHovering = false;
 
-                // Applying force.
-                Debug.Log("Jump Performed!", this);
-                var currentVelocity = rigidBody.velocity;
+                // Switching to air locomotion so the first jump would not be affected by ground drag.
+                moveForceController.LocomotionAir();
 
-                //Zeroing up velocity to make jumps consistent.
-                currentVelocity.y = 0;
+                // Adding jump force.
+                moveForceController.AddJumpForce();
 
-                //Adding our jump velocity.
-                currentVelocity.y += jumpSpeed;
-                rigidBody.velocity = currentVelocity;
-
-                // Double jump number being brought down.
-                jumpNumberHelper -= 1;
-
+                // Double jump number being brought down before touching ground.
+                moveForceController.JumpNumberSubtract();
             }
         }
 
@@ -171,12 +155,18 @@ namespace RokasDan.FistPump.Runtime
             //enters the ground.
             if (grounded && isInAir == 1)
             {
+                // Resting jump number since raycast enters ground.
+                moveForceController.JumpReset();
+
+                // Switching to ground locomotion settings since raycast enters ground.
+                moveForceController.LocomotionGround();
                 isInAir = 0;
-                jumpNumberHelper = jumpNumber;
             }
 
-            if (grounded == false && isInAir == 0)
+            if (grounded == false)
             {
+                // Switching to air locomotion settings since raycast leaves ground.
+                moveForceController.LocomotionAir();
                 isInAir = 1;
             }
         }

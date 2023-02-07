@@ -14,7 +14,7 @@ namespace RokasDan.FistPump.Runtime
         // Ground check class, use the raycast lenght for the hover component to cast this ray.
         public bool IsGrounded(float hoverRayLenght)
         {
-            return Physics.CheckSphere(transform.position - new Vector3(0, hoverRayLenght, 0), 0.5f) ||
+            return Physics.CheckSphere(transform.position - new Vector3(0, hoverRayLenght, 0), 0.2f) ||
                    Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), hoverRayLenght);
         }
     }
