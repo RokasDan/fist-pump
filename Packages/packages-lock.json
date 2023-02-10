@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.dbrizov.naughtyattributes": {
+      "version": "file:NaughtyAttributes-2.1.4",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.8.2",
       "depth": 1,

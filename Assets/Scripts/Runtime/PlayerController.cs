@@ -9,6 +9,35 @@ namespace RokasDan.FistPump.Runtime
 {
     public class PlayerController : MonoBehaviour
     {
+        [Header("Hover Type Controls")]
+        // Not sure where to put this?
+        [SerializeField]
+        private float rideHeight;
+
+        [SerializeField]
+        private bool isHovering;
+
+        [SerializeField]
+        private bool disableGravityOnHover;
+
+        // Choose force type for hovering.
+        public enum HoverType
+        {
+            SpringForce,
+            PIDForce
+        }
+
+        public HoverType hoverType;
+
+        // Choose force type for pushing down objects on which object is hovering.
+        public enum PushDownForceType
+        {
+            SpringForce,
+            PIDForce
+        }
+
+        public PushDownForceType pushDownForceType;
+
         [Header("Dependencies")]
         [SerializeField]
         private Rigidbody rigidBody;
@@ -16,16 +45,23 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private Transform cameraTransform;
 
-        [FormerlySerializedAs("groundCheck")]
         [SerializeField]
         private GroundedController groundedController;
 
-        [FormerlySerializedAs("hoverRay")]
+        [SerializeField]
+        private MoveForceController moveForceController;
+
+        [SerializeField]
+        private JumpForceController jumpForceController;
+
         [SerializeField]
         private HoverController hoverController;
 
         [SerializeField]
-        private MoveForceController moveForceController;
+        private SpringForce springForce;
+
+        [SerializeField]
+        private PIDForce pidForce;
 
         [Header("Inputs")]
         [SerializeField]
@@ -37,7 +73,7 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private InputActionReference lookInputAction;
 
-        [Header("Gizmos")]
+        [Header("Input Gizmos")]
         [SerializeField]
         private float gizmoLenght = 3f;
 
@@ -47,7 +83,7 @@ namespace RokasDan.FistPump.Runtime
         private Vector3 relativeMoveDirection;
         private float radius;
         private int jumpNumberHelper;
-        private int isInAir = 1;
+        private bool rideThreshold = false;
 
         private void OnEnable()
         {
@@ -75,11 +111,34 @@ namespace RokasDan.FistPump.Runtime
 
         private void FixedUpdate()
         {
-            GroundCheck();
+            groundedController.UpdateGrounded();
+            RideHeightThreshold();
+            PlayerHitTop();
+
+            // Hover Forces.
+            if (rideThreshold && isHovering)
+            {
+                // Hovering starts, we reset jump number.
+                jumpForceController.JumpReset();
+
+                // Switching to ground locomotion since we started hovering.
+                moveForceController.LocomotionGround();
+
+                // Turn off gravity if toggled.
+                GravityOffOnHover();
+
+                // Apply hover forces to the player.
+                UpdateHover();
+
+                // Apply down force to rigid bodies this object hits with ray.
+                UpdateDownForce();
+            }
+
+            // Move Forces
             // If vector3 is not 0 0 0 we apply the move function.
             if (absoluteMoveDirection != Vector3.zero)
             {
-                Move();
+                UpdateMove();
             }
         }
 
@@ -106,18 +165,17 @@ namespace RokasDan.FistPump.Runtime
         // If WASD or arrows are not pressed the vector3.zero is applied to our move direction.
         private void OnMoveCanceled(InputAction.CallbackContext context)
         {
-            Debug.Log("Move Canceled!", this);
             absoluteMoveDirection = Vector3.zero;
         }
 
         // Listening for the space bar input, if pressed jump method is preformed.
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
-            Jump();
+            UpdateJump();
         }
 
         // Our move function which adds velocity to our 3D vector.
-        private void Move()
+        private void UpdateMove()
         {
             // Applying the rotation of the camera forward vector to the WASD absolute vector.
             relativeMoveDirection = flattenedLookRotation * absoluteMoveDirection;
@@ -126,67 +184,133 @@ namespace RokasDan.FistPump.Runtime
             moveForceController.AddMoveForce(relativeMoveDirection);
         }
 
-        // Our Jump function adds velocity to Y vector.
-        private void Jump()
+        // Our jump method which sees if we can jump and applies jump force.
+        private void UpdateJump()
         {
-            if (moveForceController.JumpNumberCheck())
+            var jumpCheck = jumpForceController.JumpNumberCheck();
+            if (jumpCheck)
             {
-                //Deactivating hover so it wouldn't stop one from jumping.
-                hoverController.isHovering = false;
+                // Enable gravity if previously disabled by the disable gravity on hover toggle.
+                GravityOnJump();
 
-                // Switching to air locomotion so the first jump would not be affected by ground drag.
+                isHovering = false;
                 moveForceController.LocomotionAir();
-
-                // Adding jump force.
-                moveForceController.AddJumpForce();
-
-                // Double jump number being brought down before touching ground.
-                moveForceController.JumpNumberSubtract();
+                jumpForceController.AddJumpForce(rigidBody);
+                jumpForceController.JumpNumberSubtract();
             }
         }
 
-        private void GroundCheck()
+        private void UpdateHover()
         {
-            // Checking if we are grounded with the lenght of out hover ray distance.
-            bool grounded = groundedController.IsGrounded(hoverController.rayHit.distance);
-
-            //Creating an event so air jumps would be possible when riding of a cliff.
-            //Event prevents jump stack so jump number would only reset when the ray
-            //enters the ground.
-            if (grounded && isInAir == 1)
+            // Choosing a hover type and applying hovering forces.
+            if (hoverType == HoverType.SpringForce)
             {
-                // Resting jump number since raycast enters ground.
-                moveForceController.JumpReset();
-
-                // Switching to ground locomotion settings since raycast enters ground.
-                moveForceController.LocomotionGround();
-                isInAir = 0;
+                var position = transform.position;
+                var hoverForce = springForce.GetOutput(groundedController.RayHit, rigidBody, rideHeight);
+                hoverController.Hover(rigidBody, hoverForce);
+                Debug.DrawLine(position, position + (Vector3.down * hoverForce), Color.yellow);
+            }
+            else
+            {
+                var position = transform.position;
+                var hoverForce = pidForce.GetOutput(Time.deltaTime, rideHeight, groundedController.GroundDistance);
+                hoverController.Hover(rigidBody, hoverForce);
+                Debug.DrawLine(position, position + (Vector3.down * hoverForce), Color.red);
             }
 
-            if (grounded == false)
+        }
+
+        private void UpdateDownForce()
+        {
+            // Choosing push type and pushing down rigid bodies if hovering on them.
+            if (pushDownForceType == PushDownForceType.SpringForce)
             {
-                // Switching to air locomotion settings since raycast leaves ground.
-                moveForceController.LocomotionAir();
-                isInAir = 1;
+                var hoverForce = springForce.GetOutput(groundedController.RayHit, rigidBody, rideHeight);
+                hoverController.PushDown(groundedController.RayHit, hoverForce);
+            }
+            else
+            {
+                var hoverForce = pidForce.GetOutput(Time.deltaTime, rideHeight, groundedController.GroundDistance);
+                hoverController.PushDown(groundedController.RayHit, hoverForce);
             }
         }
+
+
+        // Method used for ride height check.
+        private void RideHeightThreshold()
+        {
+            var startThreshold = groundedController.RayHit.distance - rideHeight;
+            if (-startThreshold >= 0)
+            {
+                rideThreshold = true;
+
+                // Check if we want to turn of gravity on hover, if so we turn it off.
+            }
+
+            if (groundedController.IsGrounded == false)
+            {
+                // Setting air locomotion, useful when player just rides off cliffs and drops.
+                moveForceController.LocomotionAir();
+                rideThreshold = false;
+            }
+        }
+
+        // Method for turning hovering and ground locomotion if jump failed and hit something
+        // before exiting ground check Ray.
+        private void PlayerHitTop()
+        {
+            if(isHovering == false && groundedController.IsGrounded && rigidBody.velocity.y <= 0)
+            {
+                isHovering = true;
+            }
+        }
+
+        // Gravity off on hover if the designer wants to do so.
+        private void GravityOffOnHover()
+        {
+            if (disableGravityOnHover)
+            {
+                rigidBody.useGravity = false;
+            }
+        }
+
+        // If we choose to disable gravity on hover, we need to turn it back on when we jump.
+        private void GravityOnJump()
+        {
+            if (disableGravityOnHover)
+            {
+                rigidBody.useGravity = true;
+            }
+        }
+
+        // Resetting hover bool, we want to reset this on the raycast enter event.
+        public void HoverReset()
+        {
+            isHovering = true;
+        }
+
 
         //Gizmos
         private void OnDrawGizmos()
         {
+            var position = transform.position;
             //Camera look directly from camera transform.
             Gizmos.color = Color.green;
-            Gizmos.DrawRay(transform.position + new Vector3(0, 0.45f, 0), cameraTransform.forward.normalized * gizmoLenght
+            Gizmos.DrawRay(position + new Vector3(0, 0.45f, 0), cameraTransform.forward.normalized * gizmoLenght
             );
 
             //Camera look flattened to the Y coordinate.
             Gizmos.color = Color.blue;
-            Gizmos.DrawRay(transform.position, flattenedLookDirection.normalized * gizmoLenght
+            Gizmos.DrawRay(position, flattenedLookDirection.normalized * gizmoLenght
             );
 
             // Relative Move direction of the WASD absolute vectors when the rotation of the camera forward vector is applied.
             Gizmos.color = Color.red;
-            Gizmos.DrawRay(transform.position, relativeMoveDirection.normalized * gizmoLenght);
+            Gizmos.DrawRay(position, relativeMoveDirection.normalized * gizmoLenght);
+
+            // Ride height sphere.
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(position - new Vector3(0, rideHeight, 0), 0.3f);
         }
     }
 }
