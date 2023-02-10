@@ -6,14 +6,6 @@ namespace RokasDan.FistPump.Runtime
 {
     public class GroundedController : MonoBehaviour
     {
-        // Method to check if the object is grounded.
-
-        public bool IsGrounded { get; set; }
-        public float GroundDistance { get; set; }
-
-        // Need to speak about this, need to pass this to other class methods.
-        public RaycastHit RayHit;
-
         // Event, here users can specify functions they want to use when these events happen:
         [SerializeField]
         private UnityEvent onEnteredGrounded;
@@ -29,6 +21,13 @@ namespace RokasDan.FistPump.Runtime
 
         private Vector3 p1;
         private Vector3 rayDistance;
+
+        // Method to check if the object is grounded.
+        public bool IsGrounded { get; set; }
+        public float GroundDistance { get; set; }
+
+        // Need to speak about this, need to pass this to other class methods??????????????
+        public RaycastHit RayHit;
 
         // Ground check with events and bool value for direct use.
         public void UpdateGrounded()

@@ -6,51 +6,25 @@ namespace RokasDan.FistPump.Runtime
 {
     public class PlayerController : MonoBehaviour
     {
-        [Header("Hover Type Controls")]
-        // Not sure where to put this?
-        [SerializeField]
-        private float rideHeight;
-
-        [SerializeField]
-        private bool isHovering;
-
-        [SerializeField]
-        private bool disableGravityOnHover;
-
-        // Choose force type for hovering.
-        public enum HoverType
-        {
-            SpringForce,
-            PIDForce
-        }
-
-        public HoverType hoverType;
-
-        // Choose force type for pushing down objects on which object is hovering.
-        public enum PushDownForceType
-        {
-            SpringForce,
-            PIDForce
-        }
-
-        public PushDownForceType pushDownForceType;
-
-        [Header("Dependencies")]
+        [Header("Object Dependencies")]
         [SerializeField]
         private Rigidbody rigidBody;
 
         [SerializeField]
         private Transform cameraTransform;
 
+        [Header("Raycast Dependencies")]
         [SerializeField]
         private GroundedController groundedController;
 
+        [Header("Locomotion Dependencies")]
         [SerializeField]
         private MoveForceController moveForceController;
 
         [SerializeField]
         private JumpForceController jumpForceController;
 
+        [Header("Hover Dependencies")]
         [SerializeField]
         private HoverController hoverController;
 
@@ -74,6 +48,33 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float gizmoLenght = 3f;
 
+        [Header("Hover Type Controls")]
+        // Not sure where to put this?
+        [SerializeField]
+        private float rideHeight;
+
+        [SerializeField]
+        private bool disableGravityOnHover;
+
+        // Choose force type for hovering.
+        public enum HoverType
+        {
+            SpringForce,
+            PIDForce
+        }
+
+        public HoverType hoverType;
+
+        // Choose force type for pushing down objects on which object is hovering.
+        public enum PushDownForceType
+        {
+            SpringForce,
+            PIDForce
+        }
+
+        public PushDownForceType pushDownForceType;
+        //Not sure how to make these private and serializedField.
+
         private Vector3 flattenedLookDirection;
         private Quaternion flattenedLookRotation;
         private Vector3 absoluteMoveDirection;
@@ -81,6 +82,7 @@ namespace RokasDan.FistPump.Runtime
         private float radius;
         private int jumpNumberHelper;
         private bool rideThreshold;
+        private bool isHovering;
 
         private void OnEnable()
         {
@@ -169,6 +171,12 @@ namespace RokasDan.FistPump.Runtime
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
             UpdateJump();
+        }
+
+        // Resetting hover bool, we want to reset this on the raycast enter event.
+        public void HoverReset()
+        {
+            isHovering = true;
         }
 
         // Our move function which adds velocity to our 3D vector.
@@ -280,13 +288,6 @@ namespace RokasDan.FistPump.Runtime
                 rigidBody.useGravity = true;
             }
         }
-
-        // Resetting hover bool, we want to reset this on the raycast enter event.
-        public void HoverReset()
-        {
-            isHovering = true;
-        }
-
 
         //Gizmos
         private void OnDrawGizmos()

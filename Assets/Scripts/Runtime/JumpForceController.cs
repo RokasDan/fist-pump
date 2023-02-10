@@ -14,8 +14,6 @@ namespace RokasDan.FistPump.Runtime
 
         private int jumpNumberHelper = 2;
 
-        private bool onGround;
-
         public void AddJumpForce(Rigidbody objectRigidbody)
         {
             // Applying force.
