@@ -1,9 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
+
 
 namespace RokasDan.FistPump.Runtime
 {
@@ -83,7 +80,7 @@ namespace RokasDan.FistPump.Runtime
         private Vector3 relativeMoveDirection;
         private float radius;
         private int jumpNumberHelper;
-        private bool rideThreshold = false;
+        private bool rideThreshold;
 
         private void OnEnable()
         {
@@ -250,6 +247,7 @@ namespace RokasDan.FistPump.Runtime
             if (groundedController.IsGrounded == false)
             {
                 // Setting air locomotion, useful when player just rides off cliffs and drops.
+                GravityOnJump();
                 moveForceController.LocomotionAir();
                 rideThreshold = false;
             }
