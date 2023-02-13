@@ -11,59 +11,135 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private Rigidbody objectRigidbody;
 
-        [Header("Multipliers")]
-        [Min(1f)]
+        [Header("Modifiers")]
         [SerializeField]
-        private float speedMultiplier = 10f;
-
-        // While object is on ground.
-        [Header("Ground Locomotion")]
-        [Min(0f)]
-        [SerializeField]
-        private float groundMoveSpeed = 6f;
-
-        [SerializeField]
-        private float groundDrag = 6f;
+        private float sprintModifier;
 
         // While object is in air.
         [Header("Air Locomotion")]
-        [Min(0f)]
         [SerializeField]
-        private float airMoveSpeed = 6f;
+        private float airSpeed;
 
         [SerializeField]
-        private float airDrag = 6f;
+        private float airAcceleration;
+
+        [SerializeField]
+        private float airDeceleration;
+
+        [SerializeField]
+        private float airDrag;
+
+        // While object is on ground.
+        [Header("Ground Locomotion")]
+        [SerializeField]
+        private float groundSpeed;
+
+        [SerializeField]
+        private float groundAcceleration;
+
+        [SerializeField]
+        private float groundDeceleration;
+
+        [SerializeField]
+        private float groundDrag;
 
         private bool onGround;
+        private bool isSprinting;
 
-        // The main method of the class which will calculate and add velocity to the rigid body of the object.
-        public void AddMoveForce(Vector3 moveDirection)
-        {
-            var groundSpeed = groundMoveSpeed * speedMultiplier;
-            var airSpeed = airMoveSpeed * speedMultiplier;
-            if (onGround)
-            {
-                objectRigidbody.AddForce(moveDirection * groundSpeed, ForceMode.Acceleration);
-            }
-            else
-            {
-                objectRigidbody.AddForce(moveDirection * airSpeed, ForceMode.Acceleration);
-            }
-        }
 
         // Method which switches between ground and air locomotion. Should be placed
         // within the ground check of the player controller when hover starts.
         public void LocomotionGround()
         {
             onGround = true;
-            objectRigidbody.drag = groundDrag;
+            //objectRigidbody.drag = groundDrag;
         }
 
         // Method should be placed when jump is successful.
         public void LocomotionAir()
         {
             onGround = false;
-            objectRigidbody.drag = airDrag;
+            //objectRigidbody.drag = airDrag;
         }
+
+        public void LerpObjectVelocity(Vector3 moveDirection)
+        {
+            if (onGround)
+            {
+                objectRigidbody.drag = groundDrag;
+
+                if (isSprinting)
+                {
+                    Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
+                        moveDirection * (groundSpeed * sprintModifier), groundAcceleration * Time.fixedDeltaTime);
+                    desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                    objectRigidbody.velocity = desiredMoveDirection;
+                }
+                else
+                {
+                    Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
+                        moveDirection * groundSpeed, groundAcceleration * Time.fixedDeltaTime);
+                    desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                    objectRigidbody.velocity = desiredMoveDirection;
+                }
+            }
+            else
+            {
+                objectRigidbody.drag = airDrag;
+
+                if (isSprinting)
+                {
+                    Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
+                        moveDirection * (airSpeed * sprintModifier), airAcceleration * Time.fixedDeltaTime);
+                    desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                    objectRigidbody.velocity = desiredMoveDirection;
+                }
+                else
+                {
+                    Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
+                        moveDirection * airSpeed, airAcceleration * Time.fixedDeltaTime);
+                    desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                    objectRigidbody.velocity = desiredMoveDirection;
+                }
+            }
+        }
+
+        public void StopObject()
+        {
+            if (onGround)
+            {
+                objectRigidbody.drag = groundDrag;
+
+                Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity, Vector3.zero, groundDeceleration * Time.fixedDeltaTime);
+                desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                objectRigidbody.velocity = desiredMoveDirection;
+            }
+            else
+            {
+                objectRigidbody.drag = airDrag;
+
+                Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity, Vector3.zero, airDeceleration * Time.fixedDeltaTime);
+                desiredMoveDirection.y = objectRigidbody.velocity.y;
+
+                objectRigidbody.velocity = desiredMoveDirection;
+            }
+        }
+
+        public void AddSprintForce()
+        {
+            isSprinting = true;
+        }
+
+        public void StopSprintForce()
+        {
+            isSprinting = false;
+        }
+
+
     }
 }

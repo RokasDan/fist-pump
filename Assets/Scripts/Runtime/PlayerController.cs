@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-
 namespace RokasDan.FistPump.Runtime
 {
     public class PlayerController : MonoBehaviour
@@ -42,7 +41,7 @@ namespace RokasDan.FistPump.Runtime
         private InputActionReference moveInputAction;
 
         [SerializeField]
-        private InputActionReference lookInputAction;
+        private InputActionReference sprintInputAction;
 
         [Header("Input Gizmos")]
         [SerializeField]
@@ -75,21 +74,39 @@ namespace RokasDan.FistPump.Runtime
         public PushDownForceType pushDownForceType;
         //Not sure how to make these private and serializedField.
 
-        private Vector3 flattenedLookDirection;
-        private Quaternion flattenedLookRotation;
         private Vector3 absoluteMoveDirection;
-        private Vector3 relativeMoveDirection;
         private float radius;
         private int jumpNumberHelper;
         private bool rideThreshold;
         private bool isHovering;
+        private bool isSprinting;
+        private bool isWalkingForward;
+
+        private void OnDrawGizmos()
+        {
+            var moveDirection = GetMoveDirection();
+            var position = transform.position;
+
+            //Camera look directly from camera transform.
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(position + new Vector3(0, 0.45f, 0), cameraTransform.forward.normalized * gizmoLenght);
+
+            // Relative Move direction of the WASD absolute vectors when the rotation of the camera forward vector is applied.
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(position, moveDirection.normalized * gizmoLenght);
+
+            // Ride height sphere.
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(position - new Vector3(0, rideHeight, 0), 0.3f);
+        }
 
         private void OnEnable()
         {
             //Subscribing the methods to prevent memory leaks
             jumpInputAction.action.performed += OnJumpPerformed;
 
-            lookInputAction.action.performed += OnLookPreformed;
+            sprintInputAction.action.performed += OnSprintPerformed;
+            sprintInputAction.action.canceled += OnSprintCanceled;
 
             moveInputAction.action.performed += OnMovePerformed;
             moveInputAction.action.canceled += OnMoveCanceled;
@@ -100,12 +117,19 @@ namespace RokasDan.FistPump.Runtime
             //Unsubscribing the methods to prevent memory leaks
             jumpInputAction.action.performed -= OnJumpPerformed;
 
-            lookInputAction.action.performed -= OnLookPreformed;
+            sprintInputAction.action.performed -= OnSprintPerformed;
+            sprintInputAction.action.canceled -= OnSprintCanceled;
 
             moveInputAction.action.performed -= OnMovePerformed;
             moveInputAction.action.canceled -= OnMoveCanceled;
 
             absoluteMoveDirection = Vector3.zero;
+        }
+
+        private void Awake()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
 
         private void FixedUpdate()
@@ -138,19 +162,12 @@ namespace RokasDan.FistPump.Runtime
             if (absoluteMoveDirection != Vector3.zero)
             {
                 UpdateMove();
+                UpdateSprint();
             }
-        }
-
-        private void OnLookPreformed(InputAction.CallbackContext context)
-        {
-            //Getting camera forward transform.
-            var cameraDirection = cameraTransform.forward;
-
-            //Flattening the camera forward transform to the Y plane.
-            flattenedLookDirection = Vector3.ProjectOnPlane(cameraDirection, Vector3.up);
-
-            // Getting the angle which will rotate the absolute vectors from WASD keys.
-            flattenedLookRotation = Quaternion.LookRotation(flattenedLookDirection);
+            else
+            {
+                moveForceController.StopObject();
+            }
         }
 
         // If WASD or arrows are pressed we start apply a Vector3 to our move direction.
@@ -158,6 +175,9 @@ namespace RokasDan.FistPump.Runtime
         {
             var axis = context.ReadValue<Vector2>();
             absoluteMoveDirection = new Vector3(axis.x, 0f, axis.y);
+
+            // Looking if we are walking forward for sprint. Need to check this!
+            isWalkingForward = axis.y >= 0.71;
         }
 
 
@@ -165,12 +185,25 @@ namespace RokasDan.FistPump.Runtime
         private void OnMoveCanceled(InputAction.CallbackContext context)
         {
             absoluteMoveDirection = Vector3.zero;
+            isWalkingForward = false;
         }
 
         // Listening for the space bar input, if pressed jump method is preformed.
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
             UpdateJump();
+        }
+
+        // Activating sprint bool.
+        private void OnSprintPerformed(InputAction.CallbackContext context)
+        {
+            isSprinting = true;
+        }
+
+        // Deactivating sprint bool.
+        private void OnSprintCanceled(InputAction.CallbackContext context)
+        {
+            isSprinting = false;
         }
 
         // Resetting hover bool, we want to reset this on the raycast enter event.
@@ -182,11 +215,7 @@ namespace RokasDan.FistPump.Runtime
         // Our move function which adds velocity to our 3D vector.
         private void UpdateMove()
         {
-            // Applying the rotation of the camera forward vector to the WASD absolute vector.
-            relativeMoveDirection = flattenedLookRotation * absoluteMoveDirection;
-
-            // Adding force through our moveForceController class.
-            moveForceController.AddMoveForce(relativeMoveDirection);
+            moveForceController.LerpObjectVelocity(GetMoveDirection());
         }
 
         // Our jump method which sees if we can jump and applies jump force.
@@ -202,6 +231,18 @@ namespace RokasDan.FistPump.Runtime
                 moveForceController.LocomotionAir();
                 jumpForceController.AddJumpForce(rigidBody);
                 jumpForceController.JumpNumberSubtract();
+            }
+        }
+
+        private void UpdateSprint()
+        {
+            if (isWalkingForward && isSprinting && isHovering && rideThreshold)
+            {
+                moveForceController.AddSprintForce();
+            }
+            else
+            {
+                moveForceController.StopSprintForce();
             }
         }
 
@@ -222,7 +263,6 @@ namespace RokasDan.FistPump.Runtime
                 hoverController.Hover(rigidBody, hoverForce);
                 Debug.DrawLine(position, position + (Vector3.down * hoverForce), Color.red);
             }
-
         }
 
         private void UpdateDownForce()
@@ -265,7 +305,7 @@ namespace RokasDan.FistPump.Runtime
         // before exiting ground check Ray.
         private void PlayerHitTop()
         {
-            if(isHovering == false && groundedController.IsGrounded && rigidBody.velocity.y <= 0)
+            if (isHovering == false && groundedController.IsGrounded && rigidBody.velocity.y <= 0)
             {
                 isHovering = true;
             }
@@ -289,27 +329,26 @@ namespace RokasDan.FistPump.Runtime
             }
         }
 
-        //Gizmos
-        private void OnDrawGizmos()
+        private Vector3 GetMoveDirection()
         {
-            var position = transform.position;
-            //Camera look directly from camera transform.
-            Gizmos.color = Color.green;
-            Gizmos.DrawRay(position + new Vector3(0, 0.45f, 0), cameraTransform.forward.normalized * gizmoLenght
-            );
+            var rotation = GetMoveRotation();
+            var relativeMoveDirection = rotation * absoluteMoveDirection;
 
-            //Camera look flattened to the Y coordinate.
-            Gizmos.color = Color.blue;
-            Gizmos.DrawRay(position, flattenedLookDirection.normalized * gizmoLenght
-            );
+            return relativeMoveDirection;
+        }
 
-            // Relative Move direction of the WASD absolute vectors when the rotation of the camera forward vector is applied.
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(position, relativeMoveDirection.normalized * gizmoLenght);
+        private Quaternion GetMoveRotation()
+        {
+            //Getting camera forward transform.
+            var cameraDirection = cameraTransform.forward;
 
-            // Ride height sphere.
-            Gizmos.color = Color.blue;
-            Gizmos.DrawSphere(position - new Vector3(0, rideHeight, 0), 0.3f);
+            //Flattening the camera forward transform to the Y plane.
+            var flattenedLookDirection = Vector3.ProjectOnPlane(cameraDirection, Vector3.up);
+
+            // Getting the angle which will rotate the absolute vectors from WASD keys.
+            var flattenedLookRotation = Quaternion.LookRotation(flattenedLookDirection);
+
+            return flattenedLookRotation;
         }
     }
 }
