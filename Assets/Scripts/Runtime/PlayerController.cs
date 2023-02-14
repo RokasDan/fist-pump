@@ -80,7 +80,6 @@ namespace RokasDan.FistPump.Runtime
         private bool rideThreshold;
         private bool isHovering;
         private bool isSprinting;
-        private bool isWalkingForward;
 
         private void OnDrawGizmos()
         {
@@ -156,6 +155,10 @@ namespace RokasDan.FistPump.Runtime
                 // Apply down force to rigid bodies this object hits with ray.
                 UpdateDownForce();
             }
+            else
+            {
+                moveForceController.LocomotionAir();
+            }
 
             // Move Forces
             // If vector3 is not 0 0 0 we apply the move function.
@@ -175,9 +178,6 @@ namespace RokasDan.FistPump.Runtime
         {
             var axis = context.ReadValue<Vector2>();
             absoluteMoveDirection = new Vector3(axis.x, 0f, axis.y);
-
-            // Looking if we are walking forward for sprint. Need to check this!
-            isWalkingForward = axis.y >= 0.71;
         }
 
 
@@ -185,7 +185,6 @@ namespace RokasDan.FistPump.Runtime
         private void OnMoveCanceled(InputAction.CallbackContext context)
         {
             absoluteMoveDirection = Vector3.zero;
-            isWalkingForward = false;
         }
 
         // Listening for the space bar input, if pressed jump method is preformed.
@@ -215,7 +214,7 @@ namespace RokasDan.FistPump.Runtime
         // Our move function which adds velocity to our 3D vector.
         private void UpdateMove()
         {
-            moveForceController.LerpObjectVelocity(GetMoveDirection());
+           moveForceController.LerpObjectVelocity(GetMoveDirection());
         }
 
         // Our jump method which sees if we can jump and applies jump force.
@@ -236,7 +235,7 @@ namespace RokasDan.FistPump.Runtime
 
         private void UpdateSprint()
         {
-            if (isWalkingForward && isSprinting && isHovering && rideThreshold)
+            if (absoluteMoveDirection.z >= 0.70 && isSprinting && isHovering && rideThreshold)
             {
                 moveForceController.AddSprintForce();
             }
@@ -307,7 +306,7 @@ namespace RokasDan.FistPump.Runtime
         {
             if (isHovering == false && groundedController.IsGrounded && rigidBody.velocity.y <= 0)
             {
-                isHovering = true;
+                HoverReset();
             }
         }
 
