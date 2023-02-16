@@ -567,15 +567,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objectRigidbody: {fileID: 166504816}
-  sprintModifier: 1.2
+  sprintModifier: 1.5
   sprintAcceleration: 2
-  airSpeed: 5
-  airAcceleration: 4
+  airSpeed: 12
+  airAcceleration: 0.8
   airDrag: 0
   groundSpeed: 12
-  groundAcceleration: 5
+  groundAcceleration: 1.5
   groundDeceleration: 5
-  groundDrag: 1
+  groundDrag: 0
 --- !u!114 &166504824
 MonoBehaviour:
   m_ObjectHideFlags: 0

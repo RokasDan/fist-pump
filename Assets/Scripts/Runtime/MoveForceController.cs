@@ -18,16 +18,13 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float sprintAcceleration;
 
+        [Header("Air Control")]
         // While object is in air.
-        [Header("Air Locomotion")]
         [SerializeField]
         private float airSpeed;
 
         [SerializeField]
         private float airAcceleration;
-
-        //[SerializeField]
-        //private float airDeceleration;
 
         [SerializeField]
         private float airDrag;
@@ -75,77 +72,52 @@ namespace RokasDan.FistPump.Runtime
                 // Checking if we are using sprint modifiers while on ground.
                 if (isSprinting)
                 {
-                    LerpDirectionGround(moveDirection, groundSpeed * sprintModifier,
+                    LerpDirection(moveDirection, groundSpeed * sprintModifier,
                         groundAcceleration * sprintAcceleration);
                 }
                 else
                 {
-                    LerpDirectionGround(moveDirection, groundSpeed, groundAcceleration);
+                    LerpDirection(moveDirection, groundSpeed,
+                        groundAcceleration);
                 }
             }
             else
             {
-                // Adding force with lerp while in air.
-                objectRigidbody.drag = airDrag;
-
-                // Checking if we are using sprint modifiers while in air.
-                if (isSprinting)
+                if (objectRigidbody.velocity.magnitude > airSpeed)
                 {
-                    LerpDirectionAir(moveDirection, airSpeed * sprintModifier,
-                        airAcceleration * sprintAcceleration);
+                    LerpDirection(moveDirection, objectRigidbody.velocity.magnitude,
+                        airAcceleration);
+                    
                 }
                 else
                 {
-                    LerpDirectionAir(moveDirection, airSpeed, airAcceleration);
+                    LerpDirection(moveDirection, airSpeed,
+                        airAcceleration);
                 }
             }
         }
 
-        private void LerpDirectionGround(Vector3 moveDirection, float speed, float acceleration)
+        private void LerpDirection(Vector3 moveDirection, float speed, float acceleration)
         {
             // Calculating the vectors to which we will be lerp.
-            Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
+            var desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
                 moveDirection * speed,
                 acceleration
                 * Time.fixedDeltaTime);
 
             // Making sure we dont override our gravity effect.
-            desiredMoveDirection.y = objectRigidbody.velocity.y;
+            var velocity = objectRigidbody.velocity;
+            desiredMoveDirection.y = velocity.y;
 
             // Moving our object with lerp vectors.
-            objectRigidbody.velocity = desiredMoveDirection;
-        }
+            velocity = desiredMoveDirection;
+            objectRigidbody.velocity = velocity;
 
-        private void LerpDirectionAir(Vector3 moveDirection, float speed, float acceleration)
-        {
-            // Calculating the vectors to which we will be lerp.
-            Vector3 desiredMoveDirection = Vector3.Lerp(objectRigidbody.velocity,
-                moveDirection * speed,
-                acceleration
-                * Time.fixedDeltaTime);
-
-            // Checking if the previous velocity is faster then the one we want to apply.
-            if (objectRigidbody.velocity.magnitude > desiredMoveDirection.magnitude)
-            {
-                // If so we are only rotating the current velocity to out target velocity.
-                var velocity = objectRigidbody.velocity;
-                Vector3 rotatedCurrentVelocity = desiredMoveDirection.normalized * velocity.magnitude;
-
-                // Making sure we dont override our gravity effect for our rotated vector.
-                rotatedCurrentVelocity.y = velocity.y;
-
-                velocity = rotatedCurrentVelocity;
-                objectRigidbody.velocity = velocity;
-            }
-            else
-            {
-                // If not ture we are applying our lerp vectors as normal.
-                // Making sure we dont override our gravity effect.
-                desiredMoveDirection.y = objectRigidbody.velocity.y;
-
-                // Moving our object with lerp vectors.
-                objectRigidbody.velocity = desiredMoveDirection;
-            }
+            // Drawing our velocity vector
+            var draw = velocity;
+            draw.y = 0;
+            var position = transform.position;
+            Debug.DrawLine(position, position + draw, Color.green);
         }
 
         public void StopObject()
