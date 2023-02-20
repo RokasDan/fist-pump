@@ -12,7 +12,7 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private int jumpNumber;
 
-        private int jumpNumberHelper = 2;
+        private int currentJumpNumber;
 
         public void AddJumpForce(Rigidbody objectRigidbody)
         {
@@ -30,19 +30,19 @@ namespace RokasDan.FistPump.Runtime
         // A check method to see if we didnt use all of our jumps before touching the ground again.
         public bool JumpNumberCheck()
         {
-            return jumpNumberHelper != 0;
+            return currentJumpNumber != 0;
         }
 
         // Method for resetting the jump number once on the ground.
-        public void JumpReset()
+        public void JumpNumberReset()
         {
-            jumpNumberHelper = jumpNumber;
+            currentJumpNumber = jumpNumber;
         }
 
         // Method for subtracting jump number before touching ground again.
         public void JumpNumberSubtract()
         {
-            jumpNumberHelper -= 1;
+            currentJumpNumber -= 1;
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 namespace RokasDan.FistPump.Runtime
 {
-    public class GroundedController : MonoBehaviour
+    public class GroundCheck : MonoBehaviour
     {
         // Event, here users can specify functions they want to use when these events happen:
         [SerializeField]
@@ -16,27 +16,38 @@ namespace RokasDan.FistPump.Runtime
         [Min(1f)]
         [SerializeField]
         private float detectionHeight;
+
         [SerializeField]
         private float radius;
 
-        private Vector3 p1;
+        private Vector3 origin;
         private Vector3 rayDistance;
 
         // Method to check if the object is grounded.
-        public bool IsGrounded { get; set; }
-        public float GroundDistance { get; set; }
+        public bool IsGrounded { get; private set; }
+
+        // Raycast hit distance for other scripts public use. Like PIDforce or Spring force.
+        public float RayHitDistance { get; private set; }
+
+        private int playerLayer;
 
         // Need to speak about this, need to pass this to other class methods??????????????
         public RaycastHit RayHit;
+
+        private void Awake()
+        {
+            // Ignore the body of the current object.
+            playerLayer = ~(1 << LayerMask.NameToLayer("PlayerController"));
+        }
 
         // Ground check with events and bool value for direct use.
         public void UpdateGrounded()
         {
             // Creating the position for the first sphere. We this we make so that the distance
             // of the raycast will be smallest on the middle of the object.
-            p1 = transform.position + new Vector3(0, radius, 0);
+            origin = transform.position + new Vector3(0, radius, 0);
 
-            if (Physics.SphereCast(p1, radius, Vector3.down, out RayHit, detectionHeight))
+            if (Physics.SphereCast(origin, radius, Vector3.down, out RayHit, detectionHeight, playerLayer))
             {
                 if (IsGrounded == false)
                 {
@@ -55,8 +66,8 @@ namespace RokasDan.FistPump.Runtime
                 IsGrounded = false;
             }
 
-            GroundDistance = RayHit.distance;
-            rayDistance = new Vector3(0, GroundDistance, 0);
+            RayHitDistance = RayHit.distance;
+            rayDistance = new Vector3(0, RayHitDistance, 0);
         }
 
         private void OnDrawGizmos()

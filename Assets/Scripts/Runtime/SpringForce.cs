@@ -11,7 +11,7 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float rideSpringDamper;
 
-        public float GetOutput(RaycastHit rayHit, Rigidbody targetBody, float rideHeight)
+        public float GetOutput(Rigidbody hoverSurface, Rigidbody targetBody, float rayHitDistance, float rideHeight)
         {
             //Our player velocity and vector direction of the raycast.
             Vector3 playerVelocity = targetBody.velocity;
@@ -19,12 +19,12 @@ namespace RokasDan.FistPump.Runtime
 
             // Velocity of foreign bodies our player hits with the raycast.
             Vector3 otherObjectVelocity = Vector3.zero;
-            Rigidbody otherHitBody = rayHit.rigidbody;
 
             // Considering the other body velocity when we hitting it.
-            if (otherHitBody != null)
+            // Can I make this default ?
+            if (hoverSurface != null)
             {
-                otherObjectVelocity = otherHitBody.velocity;
+                otherObjectVelocity = hoverSurface.velocity;
             }
 
             float rayDirectionVelocity = Vector3.Dot(rayDirection, playerVelocity);
@@ -32,7 +32,7 @@ namespace RokasDan.FistPump.Runtime
 
             float releaseVelocity = rayDirectionVelocity - otherDirectionVelocity;
 
-            float x = rayHit.distance - rideHeight;
+            float x = rayHitDistance - rideHeight;
 
             float springForce = (x * rideSpringStrength) - (releaseVelocity * rideSpringDamper);
 

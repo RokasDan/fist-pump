@@ -373,13 +373,13 @@ GameObject:
   - component: {fileID: 166504817}
   - component: {fileID: 166504816}
   - component: {fileID: 166504815}
-  - component: {fileID: 166504825}
-  - component: {fileID: 166504824}
   - component: {fileID: 166504823}
   - component: {fileID: 166504826}
   - component: {fileID: 166504822}
   - component: {fileID: 166504821}
-  m_Layer: 2
+  - component: {fileID: 166504824}
+  - component: {fileID: 166504825}
+  m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -400,20 +400,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rigidBody: {fileID: 166504816}
   cameraTransform: {fileID: 1797296719}
-  groundedController: {fileID: 166504822}
+  groundCheck: {fileID: 166504822}
+  hoverController: {fileID: 166504821}
   moveForceController: {fileID: 166504823}
   jumpForceController: {fileID: 166504826}
-  hoverController: {fileID: 166504821}
-  springForce: {fileID: 166504825}
-  pidForce: {fileID: 166504824}
   jumpInputAction: {fileID: -2780093846466565034, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   moveInputAction: {fileID: -1680190386980627800, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   sprintInputAction: {fileID: 2345180702337402324, guid: 846b43c31ef92874bb22eac95438d4f3, type: 3}
   gizmoLenght: 3
-  rideHeight: 2
-  disableGravityOnHover: 0
-  hoverType: 1
-  pushDownForceType: 0
 --- !u!54 &166504816
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -522,6 +516,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ff660fed6fd05a43af9741f8aaf6257, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetRigidbody: {fileID: 166504816}
+  groundCheck: {fileID: 166504822}
+  pidForce: {fileID: 166504824}
+  springForce: {fileID: 166504825}
+  hoverHeight: 2
+  disableGravityOnHover: 0
+  hoverType: 0
+  pushDownForceType: 0
 --- !u!114 &166504822
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -537,8 +539,8 @@ MonoBehaviour:
   onEnteredGrounded:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 166504815}
-        m_TargetAssemblyTypeName: RokasDan.FistPump.Runtime.PlayerController, RokasDan.FistPump.Runtime
+      - m_Target: {fileID: 166504821}
+        m_TargetAssemblyTypeName: RokasDan.FistPump.Runtime.HoverController, RokasDan.FistPump.Runtime
         m_MethodName: HoverReset
         m_Mode: 1
         m_Arguments:
@@ -551,8 +553,20 @@ MonoBehaviour:
         m_CallState: 2
   onExitedGrounded:
     m_PersistentCalls:
-      m_Calls: []
-  detectionHeight: 2.7
+      m_Calls:
+      - m_Target: {fileID: 166504821}
+        m_TargetAssemblyTypeName: RokasDan.FistPump.Runtime.HoverController, RokasDan.FistPump.Runtime
+        m_MethodName: HoverOff
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  detectionHeight: 3
   radius: 0.3
 --- !u!114 &166504823
 MonoBehaviour:
@@ -582,6 +596,9 @@ MonoBehaviour:
   useRatioGroundAcceleration: 0
   groundRatioStrength: 0.1
   groundMinAcceleration: 0
+  useRatioStopAcceleration: 0
+  stopRatioStrength: 0.1
+  stopMinDeceleration: 0
 --- !u!114 &166504824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2534,7 +2551,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1732369158}
-  m_Layer: 2
+  m_Layer: 6
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
