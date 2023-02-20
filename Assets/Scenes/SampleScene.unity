@@ -570,12 +570,18 @@ MonoBehaviour:
   sprintModifier: 1.5
   sprintAcceleration: 2
   airSpeed: 12
-  airAcceleration: 0.8
+  airAcceleration: 1.5
   airDrag: 0
+  useRatioAirAcceleration: 0
+  airRatioStrength: 0.1
+  airMinAcceleration: 0
   groundSpeed: 12
   groundAcceleration: 1.5
   groundDeceleration: 5
   groundDrag: 0
+  useRatioGroundAcceleration: 0
+  groundRatioStrength: 0.1
+  groundMinAcceleration: 0
 --- !u!114 &166504824
 MonoBehaviour:
   m_ObjectHideFlags: 0
