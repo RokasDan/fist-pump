@@ -20,19 +20,14 @@ namespace RokasDan.FistPump.Runtime
         [SerializeField]
         private float radius;
 
-        private Vector3 origin;
-        private Vector3 rayDistance;
-
         // Method to check if the object is grounded.
         public bool IsGrounded { get; private set; }
 
-        // Raycast hit distance for other scripts public use. Like PIDforce or Spring force.
-        public float RayHitDistance { get; private set; }
+        public RaycastHit RayHit { get; private set; }
 
         private int playerLayer;
-
-        // Need to speak about this, need to pass this to other class methods??????????????
-        public RaycastHit RayHit;
+        private Vector3 origin;
+        private Vector3 rayDistance;
 
         private void Awake()
         {
@@ -47,8 +42,10 @@ namespace RokasDan.FistPump.Runtime
             // of the raycast will be smallest on the middle of the object.
             origin = transform.position + new Vector3(0, radius, 0);
 
-            if (Physics.SphereCast(origin, radius, Vector3.down, out RayHit, detectionHeight, playerLayer))
+            if (Physics.SphereCast(origin, radius, Vector3.down, out var hit, detectionHeight, playerLayer))
             {
+                RayHit = hit;
+
                 if (IsGrounded == false)
                 {
                     onEnteredGrounded?.Invoke();
@@ -66,8 +63,7 @@ namespace RokasDan.FistPump.Runtime
                 IsGrounded = false;
             }
 
-            RayHitDistance = RayHit.distance;
-            rayDistance = new Vector3(0, RayHitDistance, 0);
+            rayDistance = new Vector3(0, RayHit.distance, 0);
         }
 
         private void OnDrawGizmos()

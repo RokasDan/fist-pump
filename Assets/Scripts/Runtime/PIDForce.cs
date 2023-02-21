@@ -29,13 +29,14 @@ namespace RokasDan.FistPump.Runtime
         [Min(1f)]
         private float power;
 
-        public enum DerivativeMeasurement
+        private enum DerivativeMeasurement
         {
             Velocity,
             ErrorRateOfChange
         }
 
-        public DerivativeMeasurement derivativeMeasurement;
+        [SerializeField]
+        private DerivativeMeasurement derivativeMeasurement;
 
         private float integrationStored;
         private float errorLast;
@@ -52,12 +53,12 @@ namespace RokasDan.FistPump.Runtime
             float error = targetValue - currentValue;
 
             // Calculate P Term.
-            float P = proportionalGain * error;
+            float proportional = proportionalGain * error;
 
             // Calculate I Term.
             // Mathf clamp is used to mitigate integral windup.
             integrationStored = Mathf.Clamp(integrationStored + (error * deltaTime), -integralSaturation, integralSaturation);
-            float I = integralGain * integrationStored;
+            float integral = integralGain * integrationStored;
 
             // Calculate both D Terms.
             float errorRateOfChange = (error - errorLast) / deltaTime;
@@ -85,9 +86,9 @@ namespace RokasDan.FistPump.Runtime
                 derivativeInitialized = true;
             }
 
-            float D = derivativeGain * deriveMeasure;
+            float derivative = derivativeGain * deriveMeasure;
 
-            float result = P + I + D;
+            float result = proportional + integral + derivative;
 
             return Mathf.Clamp(result, outputMin, outputMax) * power;
         }

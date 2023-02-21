@@ -522,7 +522,7 @@ MonoBehaviour:
   springForce: {fileID: 166504825}
   hoverHeight: 2
   disableGravityOnHover: 0
-  hoverType: 0
+  hoverType: 1
   pushDownForceType: 0
 --- !u!114 &166504822
 MonoBehaviour:
@@ -557,6 +557,18 @@ MonoBehaviour:
       - m_Target: {fileID: 166504821}
         m_TargetAssemblyTypeName: RokasDan.FistPump.Runtime.HoverController, RokasDan.FistPump.Runtime
         m_MethodName: HoverOff
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 166504821}
+        m_TargetAssemblyTypeName: RokasDan.FistPump.Runtime.HoverController, RokasDan.FistPump.Runtime
+        m_MethodName: HoverHeightThresholdReset
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

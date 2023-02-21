@@ -29,22 +29,24 @@ namespace RokasDan.FistPump.Runtime
         private bool disableGravityOnHover;
 
         // Choose force type for hovering.
-        public enum HoverType
+        private enum HoverType
         {
             SpringForce,
             PIDForce
         }
 
-        public HoverType hoverType;
+        [SerializeField]
+        private HoverType hoverType;
 
         // Choose force type for pushing down objects on which object is hovering.
-        public enum PushDownForceType
+        private enum PushDownForceType
         {
             SpringForce,
             PIDForce
         }
 
-        public PushDownForceType pushDownForceType;
+        [SerializeField]
+        private PushDownForceType pushDownForceType;
         // This doesn't work with private, gets hidden in instructor.
 
         public bool IsOverHoverThreshold { get; private set; }
@@ -63,7 +65,10 @@ namespace RokasDan.FistPump.Runtime
         {
             // Checking if we are bellow ride height when
             // hitting something.
-            HoverHeightThreshold();
+            if (IsInHoveringRange)
+            {
+                HoverHeightThreshold();
+            }
 
             // Disabling gravity if the user wants.
             if (disableGravityOnHover && IsInHoveringRange && IsOverHoverThreshold)
@@ -86,7 +91,7 @@ namespace RokasDan.FistPump.Runtime
                     var hoverForce = springForce.GetOutput(
                         groundCheck.RayHit.rigidbody,
                         targetRigidbody,
-                        groundCheck.RayHitDistance,
+                        groundCheck.RayHit.distance,
                         hoverHeight);
 
                     Hover(targetRigidbody, hoverForce);
@@ -98,7 +103,7 @@ namespace RokasDan.FistPump.Runtime
                     var hoverForce = pidForce.GetOutput(
                         Time.deltaTime,
                         hoverHeight,
-                        groundCheck.RayHitDistance);
+                        groundCheck.RayHit.distance);
 
                     Hover(targetRigidbody, hoverForce);
                     Debug.DrawLine(position, position + (Vector3.down * hoverForce), Color.red);
@@ -117,7 +122,7 @@ namespace RokasDan.FistPump.Runtime
                 var hoverForce = springForce.GetOutput(
                     groundCheck.RayHit.rigidbody,
                     targetRigidbody,
-                    groundCheck.RayHitDistance,
+                    groundCheck.RayHit.distance,
                     hoverHeight);
 
                 PushDown(groundCheck.RayHit, hoverForce);
@@ -127,7 +132,7 @@ namespace RokasDan.FistPump.Runtime
                 var hoverForce = pidForce.GetOutput(
                     Time.deltaTime,
                     hoverHeight,
-                    groundCheck.RayHitDistance);
+                    groundCheck.RayHit.distance);
 
                 PushDown(groundCheck.RayHit, hoverForce);
             }
@@ -142,6 +147,12 @@ namespace RokasDan.FistPump.Runtime
         public void HoverOff()
         {
             IsInHoveringRange = false;
+        }
+
+        public void HoverHeightThresholdReset()
+        {
+            // Setting air locomotion, useful when player just rides off cliffs and drops.
+            IsOverHoverThreshold = false;
         }
 
         // Method for turning hovering and ground locomotion if jump failed and hit something
@@ -189,12 +200,6 @@ namespace RokasDan.FistPump.Runtime
             {
                 IsOverHoverThreshold = true;
                 // Check if we want to turn of gravity on hover, if so we turn it off.
-            }
-
-            if (groundCheck.IsGrounded == false)
-            {
-                // Setting air locomotion, useful when player just rides off cliffs and drops.
-                IsOverHoverThreshold = false;
             }
         }
     }
